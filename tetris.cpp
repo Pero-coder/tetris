@@ -134,7 +134,7 @@ int main() {
                     if ((*current.arr)[row][col] == 1) print_shape(row, col);
                 }
             }
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 25; i++) {
                 Sleep(10);
                 fflush(stdin);
                 if (kbhit()) {
@@ -314,38 +314,47 @@ bool check_x_colision(int direction) {
             if ((*current.arr)[row][col] == 1) {
                 if ((row == 0) && (col == 0)) {
                     if ((((current.x - 1) + direction) < 0) || (((current.x - 1) + direction) >= COLS)) return false;
+                    if (Table[current.y - 1][(current.x - 1) + direction] == 1) return false;
                 }
 
                 else if ((row == 0) && (col == 1)) {
                     if ((((current.x) + direction) < 0) || (((current.x) + direction) >= COLS)) return false;
+                    if (Table[current.y - 1][(current.x) + direction] == 1) return false;
                 }
 
                 else if ((row == 0) && (col == 2)) {
                     if ((((current.x + 1) + direction) < 0) || (((current.x + 1) + direction) >= COLS)) return false;
+                    if (Table[current.y - 1][(current.x + 1) + direction] == 1) return false;
                 }
 
                 else if ((row == 1) && (col == 0)) {
                     if ((((current.x - 1) + direction) < 0) || (((current.x - 1) + direction) >= COLS)) return false;
+                    if (Table[current.y][(current.x - 1) + direction] == 1) return false;
                 }
 
                 else if ((row == 1) && (col == 1)) {
                     if ((((current.x) + direction) < 0) || (((current.x) + direction) >= COLS)) return false;
+                    if (Table[current.y][(current.x) + direction] == 1) return false;
                 }
 
                 else if ((row == 1) && (col == 2)) {
                     if ((((current.x + 1) + direction) < 0) || (((current.x + 1) + direction) >= COLS)) return false;
+                    if (Table[current.y][(current.x + 1) + direction] == 1) return false;
                 }
 
                 else if ((row == 2) && (col == 0)) {
                     if ((((current.x - 1) + direction) < 0) || (((current.x - 1) + direction) >= COLS)) return false;
+                    if (Table[current.y + 1][(current.x - 1) + direction] == 1) return false;
                 }
 
                 else if ((row == 2) && (col == 1)) {
                     if ((((current.x) + direction) < 0) || (((current.x) + direction) >= COLS)) return false;
+                    if (Table[current.y + 1][(current.x) + direction] == 1) return false;
                 }
 
                 else if ((row == 2) && (col == 2)) {
                     if ((((current.x + 1) + direction) < 0) || (((current.x + 1) + direction) >= COLS)) return false;
+                    if (Table[current.y + 1][(current.x + 1) + direction] == 1) return false;
                 }
             }
         }
@@ -360,38 +369,47 @@ bool check_y_colision() {
             if ((*current.arr)[row][col] == 1) {
                 if ((row == 0) && (col == 0)) {
                     if (((current.y - 1) + 1) == ROWS) return false;
+                    if (Table[(current.y - 1) + 1][current.x - 1] == 1) return false;
                 }
 
                 else if ((row == 0) && (col == 1)) {
                     if (((current.y - 1) + 1) == ROWS) return false;
+                    if (Table[(current.y - 1) + 1][current.x] == 1) return false;
                 }
 
                 else if ((row == 0) && (col == 2)) {
                     if (((current.y - 1) + 1) == ROWS) return false;
+                    if (Table[(current.y - 1) + 1][current.x + 1] == 1) return false;
                 }
 
                 else if ((row == 1) && (col == 0)) {
                     if (((current.y) + 1) == ROWS) return false;
+                    if (Table[(current.y) + 1][current.x - 1] == 1) return false;
                 }
 
                 else if ((row == 1) && (col == 1)) {
                     if (((current.y) + 1) == ROWS) return false;
+                    if (Table[(current.y) + 1][current.x] == 1) return false;
                 }
 
                 else if ((row == 1) && (col == 2)) {
                     if (((current.y) + 1) == ROWS) return false;
+                    if (Table[(current.y) + 1][current.x + 1] == 1) return false;
                 }
 
                 else if ((row == 2) && (col == 0)) {
                     if (((current.y + 1) + 1) == ROWS) return false;
+                    if (Table[(current.y + 1) + 1][current.x - 1] == 1) return false;
                 }
 
                 else if ((row == 2) && (col == 1)) {
                     if (((current.y + 1) + 1) == ROWS) return false;
+                    if (Table[(current.y + 1) + 1][current.x] == 1) return false;
                 }
 
                 else if ((row == 2) && (col == 2)) {
                     if (((current.y + 1) + 1) == ROWS) return false;
+                    if (Table[(current.y + 1) + 1][current.x + 1] == 1) return false;
                 }
             }
         }
