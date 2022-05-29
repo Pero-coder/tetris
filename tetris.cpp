@@ -14,6 +14,8 @@ typedef struct Shape
 {
     int (*arr)[3][3];
     short x, y;
+    char type;
+    bool fliped = false;
 };
 Shape current;
 Shape old_shape;
@@ -24,6 +26,7 @@ void print_at_pos(char symbol, short x, short y);
 bool check_x_colision(int direction);
 bool check_y_colision();
 void write_to_table();
+void reset_row(int r);
 
 // L - Shape
 int L_shape[3][3] = {
@@ -99,8 +102,48 @@ int Square_shape[3][3] = {
 
 
 int main() {
-    current.arr = &L_shape;
+    for (short row = 0; row < ROWS; row++) {
+        int zeros = 0;
+        for (short col = 0; col < COLS; col++) {
+            if (Table[row][col] == 0) zeros++;
+        }
+        if (zeros == 0) {
+            reset_row(row);
+        }
+    }
+
     srand(time(NULL));
+    switch (rand() % 6) {
+        case 0:
+            current.arr = &L_shape;
+            current.type = 'L';
+            break;
+
+        case 1:
+            current.arr = &S_shape;
+            current.type = 'S';
+            break;
+        
+        case 2:
+            current.arr = &T_shape;
+            current.type = 'T';
+            break;
+
+        case 3:
+            current.arr = &I_shape;
+            current.type = 'I';
+            break;
+        
+        case 4:
+            current.arr = &Z_shape;
+            current.type = 'Z';
+            break;
+        
+        case 5:
+            current.arr = &Square_shape;
+            current.type = 'Q';
+            break;
+    }
 
     for (short row = 0; row < ROWS; row++) {
         for (short col = 0; col < COLS; col++) {
@@ -117,7 +160,7 @@ int main() {
         }
     }
 
-    current.x = 5;
+    current.x = rand() % 15 + 5;
     current.y = 1;
 
     while (true) {
@@ -134,8 +177,8 @@ int main() {
                     if ((*current.arr)[row][col] == 1) print_shape(row, col);
                 }
             }
-            for (int i = 0; i < 25; i++) {
-                Sleep(10);
+            for (int i = 0; i < 50; i++) {
+                Sleep(1);
                 fflush(stdin);
                 if (kbhit()) {
                     char key = getch();
@@ -173,6 +216,62 @@ int main() {
                                     }
                                 }
                             }
+                            break;
+                        
+                        case 'w':
+                            switch (current.type) {
+                                case 'L':
+                                    if (current.fliped) {
+                                        current.arr = &L_shape;
+                                        current.fliped = false;
+                                        break;
+                                    }
+                                    current.arr = &Fliped_L_shape;
+                                    current.fliped = true;
+                                    break;
+                                
+                                case 'S':
+                                    if (current.fliped) {
+                                        current.arr = &S_shape;
+                                        current.fliped = false;
+                                        break;
+                                    }
+                                    current.arr = &Fliped_S_shape;
+                                    current.fliped = true;
+                                    break;
+                                
+                                case 'T':
+                                    if (current.fliped) {
+                                        current.arr = &T_shape;
+                                        current.fliped = false;
+                                        break;
+                                    }
+                                    current.arr = &Fliped_T_shape;
+                                    current.fliped = true;
+                                    break;
+                                
+                                case 'I':
+                                    if (current.fliped) {
+                                        current.arr = &I_shape;
+                                        current.fliped = false;
+                                        break;
+                                    }
+                                    current.arr = &Fliped_I_shape;
+                                    current.fliped = true;
+                                    break;
+                                
+                                case 'Z':
+                                    if (current.fliped) {
+                                        current.arr = &Z_shape;
+                                        current.fliped = false;
+                                        break;
+                                    }
+                                    current.arr = &Fliped_Z_shape;
+                                    current.fliped = true;
+                                    break;
+                            }
+                        case 's':
+                            i = 50;
                             break;
                     }
                 }
@@ -422,6 +521,7 @@ void write_to_table() {
     for (short row = 0; row < 3; row++) {
         for (short col = 0; col < 3; col++) {
             if ((*current.arr)[row][col] == 1) {
+                if ((current.y - 1) <= 0) exit(0);
                 if ((row == 0) && (col == 0)) {
                     Table[current.y - 1][current.x - 1] = 1;
                 }
@@ -458,6 +558,16 @@ void write_to_table() {
                     Table[current.y + 1][current.x + 1] = 1;
                 }
             }
+        }
+    }
+}
+
+
+void reset_row(int r) {
+    for (int row = r; row != 0; row--) {
+        for (int col = 0; col < COLS; col++) {
+            int value = Table[row - 1][col];
+            Table[row][col] = value;
         }
     }
 }
