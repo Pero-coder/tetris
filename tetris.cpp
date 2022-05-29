@@ -162,6 +162,8 @@ int main() {
         }
     }
 
+    print_score();
+
     current.x = rand() % 15 + 5;
     current.y = 1;
 
@@ -564,6 +566,7 @@ void write_to_table() {
 
 
 void reset_row(int r) {
+    score += 100;
     for (int row = r; row != 0; row--) {
         for (int col = 0; col < COLS; col++) {
             int value = Table[row - 1][col];
@@ -574,5 +577,6 @@ void reset_row(int r) {
 
 
 void print_score() {
-    
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {COLS + 5, 1});
+    printf("Score: %d", score);
 }
