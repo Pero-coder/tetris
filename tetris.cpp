@@ -7,99 +7,72 @@
 #define ROWS 25
 #define COLS 25
 
+#define LEFT 'a'
+#define RIGHT 'd'
+#define ROTATE 'w'
+#define FALL 's'
+
 
 short Table[ROWS][COLS] = {0};
 int score = 0;
 
 typedef struct Shape
 {
-    int (*arr)[3][3];
+    int arr[3][3];
     short x, y;
-    char type;
-    bool fliped = false;
 };
 Shape current;
 Shape old_shape;
 
-void print_shape(Shape shape);
-void clear_shape(Shape shape);
-void print_at_pos(char symbol, short x, short y);
+int old_arr[3][3] = {0};
+
+void print_shape(Shape shape, char symbol);
 bool check_x_colision(int direction);
 bool check_y_colision();
 void write_to_table();
 void reset_row(int r);
 void print_score();
+void copy_arr(int from[3][3], int to[3][3]);
+void rotate();
 
-// L - Shape
-int L_shape[3][3] = {
-    {0, 1, 0},
-    {0, 1, 0},
-    {0, 1, 1},
-};
 
-int Fliped_L_shape[3][3] = {
-    {0, 0, 1},
-    {1, 1, 1},
-    {0, 0, 0},
-};
-
-// S - Shape
-int S_shape[3][3] = {
-    {0, 1, 1},
-    {1, 1, 0},
-    {0, 0, 0},
-};
-
-int Fliped_S_shape[3][3] = {
-    {1, 0, 0},
-    {1, 1, 0},
-    {0, 1, 0},
-};
-
-// T - Shape
-int T_shape[3][3] = {
-    {0, 1, 0},
-    {1, 1, 1},
-    {0, 0, 0},
-};
-
-int Fliped_T_shape[3][3] = {
-    {0, 1, 0},
-    {1, 1, 0},
-    {0, 1, 0},
-};
-
-// I - Shape
-int I_shape[3][3] = {
-    {0, 1, 0},
-    {0, 1, 0},
-    {0, 1, 0},
-};
-
-int Fliped_I_shape[3][3] = {
-    {0, 0, 0},
-    {1, 1, 1},
-    {0, 0, 0},
-};
-
-// Z - Shape
-int Z_shape[3][3] = {
-    {1, 1, 0},
-    {0, 1, 1},
-    {0, 0, 0},
-};
-
-int Fliped_Z_shape[3][3] = {
-    {0, 1, 0},
-    {1, 1, 0},
-    {1, 0, 0},
-};
-
-// Square - Shape
-int Square_shape[3][3] = {
-    {0, 1, 1},
-    {0, 1, 1},
-    {0, 0, 0},
+int shapes[6][3][3] = {
+    // 0 - L_Shape
+    {
+        {0, 1, 0},
+        {0, 1, 0},
+        {0, 1, 1},
+    },
+    // 1 - S_Shape
+    {
+        {0, 1, 1},
+        {1, 1, 0},
+        {0, 0, 0},
+    },
+    // 2 - Z_Shape
+    {
+        {1, 1, 0},
+        {0, 1, 1},
+        {0, 0, 0},
+    },
+    // 3 - T_Shape
+    {
+        {0, 1, 0},
+        {1, 1, 1},
+        {0, 0, 0},
+    },
+    // 4 - I_Shape
+    {
+        {0, 1, 0},
+        {0, 1, 0},
+        {0, 1, 0},
+    },
+    // 5 - Squre_Shape
+    {
+        {0, 1, 1},
+        {0, 1, 1},
+        {0, 0, 0},
+    },
 };
 
 
@@ -115,50 +88,13 @@ int main() {
     }
 
     srand(time(NULL));
-    switch (rand() % 6) {
-        case 0:
-            current.arr = &L_shape;
-            current.type = 'L';
-            break;
-
-        case 1:
-            current.arr = &S_shape;
-            current.type = 'S';
-            break;
-        
-        case 2:
-            current.arr = &T_shape;
-            current.type = 'T';
-            break;
-
-        case 3:
-            current.arr = &I_shape;
-            current.type = 'I';
-            break;
-        
-        case 4:
-            current.arr = &Z_shape;
-            current.type = 'Z';
-            break;
-        
-        case 5:
-            current.arr = &Square_shape;
-            current.type = 'Q';
-            break;
-    }
+    copy_arr(shapes[rand() % 6], current.arr);
 
     for (short row = 0; row < ROWS; row++) {
         for (short col = 0; col < COLS; col++) {
             SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {col, row});
-            switch (Table[row][col]) {
-                case 0:
-                    printf(".");
-                    break;
-
-                case 1:
-                    printf("#");
-                    break;
-            }
+            if (Table[row][col] == 0) printf(".");
+            else printf("#");
         }
     }
 
@@ -171,98 +107,40 @@ int main() {
         if (check_y_colision()) {
             old_shape = current;
             current.y++;
-            clear_shape(old_shape);
-            print_shape(current);
+            print_shape(old_shape, '.');
+            print_shape(current, '#');
             for (int i = 0; i < 20; i++) {
                 Sleep(1);
                 fflush(stdin);
                 if (kbhit()) {
-                    char key = getch();
+                    char key = tolower(getch());
 
-                    switch (key) {
-                        case 'a':
-                            if (check_x_colision(-1)) {
-                                old_shape = current;
-                                current.x--;
-                                clear_shape(old_shape);
-                                print_shape(current);
-                            }
-                            break;
-                        
-                        case 'd':
-                            if (check_x_colision(1)) {
-                                old_shape = current;
-                                current.x++;
-                                clear_shape(old_shape);
-                                print_shape(current);
-                            }
-                            break;
-                        
-                        case 'w':
-                            switch (current.type) {
-                                case 'L':
-                                    clear_shape(current);
-                                    if (current.fliped) {
-                                        current.arr = &L_shape;
-                                        current.fliped = false;
-                                        break;
-                                    }
-                                    current.arr = &Fliped_L_shape;
-                                    current.fliped = true;
-                                    print_shape(current);
-                                    break;
-                                
-                                case 'S':
-                                    clear_shape(current);
-                                    if (current.fliped) {
-                                        current.arr = &S_shape;
-                                        current.fliped = false;
-                                        break;
-                                    }
-                                    current.arr = &Fliped_S_shape;
-                                    current.fliped = true;
-                                    print_shape(current);
-                                    break;
-                                
-                                case 'T':
-                                    clear_shape(current);
-                                    if (current.fliped) {
-                                        current.arr = &T_shape;
-                                        current.fliped = false;
-                                        break;
-                                    }
-                                    current.arr = &Fliped_T_shape;
-                                    current.fliped = true;
-                                    print_shape(current);
-                                    break;
-                                
-                                case 'I':
-                                    clear_shape(current);
-                                    if (current.fliped) {
-                                        current.arr = &I_shape;
-                                        current.fliped = false;
-                                        break;
-                                    }
-                                    current.arr = &Fliped_I_shape;
-                                    current.fliped = true;
-                                    print_shape(current);
-                                    break;
-                                
-                                case 'Z':
-                                    clear_shape(current);
-                                    if (current.fliped) {
-                                        current.arr = &Z_shape;
-                                        current.fliped = false;
-                                        break;
-                                    }
-                                    current.arr = &Fliped_Z_shape;
-                                    current.fliped = true;
-                                    print_shape(current);
-                                    break;
-                            }
-                        case 's':
-                            i = 50;
-                            break;
+                    if (key == LEFT) {
+                        if (check_x_colision(-1)) {
+                            old_shape = current;
+                            current.x--;
+                            print_shape(old_shape, '.');
+                            print_shape(current, '#');
+                        }
+                    }
+
+                    if (key == RIGHT) {
+                        if (check_x_colision(1)) {
+                            old_shape = current;
+                            current.x++;
+                            print_shape(old_shape, '.');
+                            print_shape(current, '#');
+                        }
+                    }
+
+                    if (key == ROTATE) {
+                        print_shape(current, '.');
+                        rotate();
+                        print_shape(current, '#');
+                    }
+
+                    if (key == FALL) {
+                        break;
                     }
                 }
             }
@@ -276,187 +154,26 @@ int main() {
 }
 
 
-void print_shape(Shape shape) {
-    for (short row = 0; row < 3; row++) {
-        for (short col = 0; col < 3; col++){
-            if ((*shape.arr)[row][col] == 1) {
-                if ((row == 0) && (col == 0)) {
-                    short x = shape.x - 1;
-                    short y = shape.y - 1;
-                    print_at_pos('#', x, y);
-                }
-
-                else if ((row == 0) && (col == 1)) {
-                    short x = shape.x;
-                    short y = shape.y - 1;
-                    print_at_pos('#', x, y);
-                }
-
-                else if ((row == 0) && (col == 2)) {
-                    short x = shape.x + 1;
-                    short y = shape.y - 1;
-                    print_at_pos('#', x, y);
-                }
-
-                else if ((row == 1) && (col == 0)) {
-                    short x = shape.x - 1;
-                    short y = shape.y;
-                    print_at_pos('#', x, y);
-                }
-
-                else if ((row == 1) && (col == 1)) {
-                    short x = shape.x;
-                    short y = shape.y;
-                    print_at_pos('#', x, y);
-                }
-
-                else if ((row == 1) && (col == 2)) {
-                    short x = shape.x + 1;
-                    short y = shape.y;
-                    print_at_pos('#', x, y);
-                }
-
-                else if ((row == 2) && (col == 0)) {
-                    short x = shape.x - 1;
-                    short y = shape.y + 1;
-                    print_at_pos('#', x, y);
-                }
-
-                else if ((row == 2) && (col == 1)) {
-                    short x = shape.x;
-                    short y = shape.y + 1;
-                    print_at_pos('#', x, y);
-                }
-
-                else if ((row == 2) && (col == 2)) {
-                    short x = shape.x + 1;
-                    short y = shape.y + 1;
-                    print_at_pos('#', x, y);
-                }
+void print_shape(Shape shape, char symbol) {
+    for (short row = -1; row <= 1; row++) {
+        for (short col = -1; col <= 1; col++){
+            if ((shape.arr)[row + 1][col + 1] == 1) {
+                SetConsoleCursorPosition(
+                        GetStdHandle(STD_OUTPUT_HANDLE), 
+                        COORD {short (shape.x + col), short (shape.y + row)});
+                printf("%c", symbol);
             }
         }
     }
 }
 
 
-void clear_shape(Shape shape) {
-    for (short row = 0; row < 3; row++) {
-        for (short col = 0; col < 3; col++){
-            if ((*shape.arr)[row][col] == 1) {
-                if ((row == 0) && (col == 0)) {
-                    short x = shape.x - 1;
-                    short y = shape.y - 1;
-                    print_at_pos('.', x, y);
-                }
-
-                else if ((row == 0) && (col == 1)) {
-                    short x = shape.x;
-                    short y = shape.y - 1;
-                    print_at_pos('.', x, y);
-                }
-
-                else if ((row == 0) && (col == 2)) {
-                    short x = shape.x + 1;
-                    short y = shape.y - 1;
-                    print_at_pos('.', x, y);
-                }
-
-                else if ((row == 1) && (col == 0)) {
-                    short x = shape.x - 1;
-                    short y = shape.y;
-                    print_at_pos('.', x, y);
-                }
-
-                else if ((row == 1) && (col == 1)) {
-                    short x = shape.x;
-                    short y = shape.y;
-                    print_at_pos('.', x, y);
-                }
-
-                else if ((row == 1) && (col == 2)) {
-                    short x = shape.x + 1;
-                    short y = shape.y;
-                    print_at_pos('.', x, y);
-                }
-
-                else if ((row == 2) && (col == 0)) {
-                    short x = shape.x - 1;
-                    short y = shape.y + 1;
-                    print_at_pos('.', x, y);
-                }
-
-                else if ((row == 2) && (col == 1)) {
-                    short x = shape.x;
-                    short y = shape.y + 1;
-                    print_at_pos('.', x, y);
-                }
-
-                else if ((row == 2) && (col == 2)) {
-                    short x = shape.x + 1;
-                    short y = shape.y + 1;
-                    print_at_pos('.', x, y);
-                }
-            }
-        } 
-    }
-}
-
-
-void print_at_pos(char symbol, short x, short y) {
-    COORD coord = {x, y};
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-    printf("%c", symbol);
-}
-
-
 bool check_x_colision(int direction) {
-    for (short row = 0; row < 3; row++) {
-        for (short col = 0; col < 3; col++) {
-            if ((*current.arr)[row][col] == 1) {
-                if ((row == 0) && (col == 0)) {
-                    if ((((current.x - 1) + direction) < 0) || (((current.x - 1) + direction) >= COLS)) return false;
-                    if (Table[current.y - 1][(current.x - 1) + direction] == 1) return false;
-                }
-
-                else if ((row == 0) && (col == 1)) {
-                    if ((((current.x) + direction) < 0) || (((current.x) + direction) >= COLS)) return false;
-                    if (Table[current.y - 1][(current.x) + direction] == 1) return false;
-                }
-
-                else if ((row == 0) && (col == 2)) {
-                    if ((((current.x + 1) + direction) < 0) || (((current.x + 1) + direction) >= COLS)) return false;
-                    if (Table[current.y - 1][(current.x + 1) + direction] == 1) return false;
-                }
-
-                else if ((row == 1) && (col == 0)) {
-                    if ((((current.x - 1) + direction) < 0) || (((current.x - 1) + direction) >= COLS)) return false;
-                    if (Table[current.y][(current.x - 1) + direction] == 1) return false;
-                }
-
-                else if ((row == 1) && (col == 1)) {
-                    if ((((current.x) + direction) < 0) || (((current.x) + direction) >= COLS)) return false;
-                    if (Table[current.y][(current.x) + direction] == 1) return false;
-                }
-
-                else if ((row == 1) && (col == 2)) {
-                    if ((((current.x + 1) + direction) < 0) || (((current.x + 1) + direction) >= COLS)) return false;
-                    if (Table[current.y][(current.x + 1) + direction] == 1) return false;
-                }
-
-                else if ((row == 2) && (col == 0)) {
-                    if ((((current.x - 1) + direction) < 0) || (((current.x - 1) + direction) >= COLS)) return false;
-                    if (Table[current.y + 1][(current.x - 1) + direction] == 1) return false;
-                }
-
-                else if ((row == 2) && (col == 1)) {
-                    if ((((current.x) + direction) < 0) || (((current.x) + direction) >= COLS)) return false;
-                    if (Table[current.y + 1][(current.x) + direction] == 1) return false;
-                }
-
-                else if ((row == 2) && (col == 2)) {
-                    if ((((current.x + 1) + direction) < 0) || (((current.x + 1) + direction) >= COLS)) return false;
-                    if (Table[current.y + 1][(current.x + 1) + direction] == 1) return false;
-                }
+    for (short row = -1; row <= 1; row++) {
+        for (short col = -1; col <= 1; col++) {
+            if ((current.arr)[row + 1][col + 1] == 1) {
+                if ((((current.x + col) + direction) < 0) || (((current.x + col) + direction) >= COLS)) return false;
+                if (Table[current.y + row][(current.x + col) + direction] == 1) return false;
             }
         }
     }
@@ -465,53 +182,11 @@ bool check_x_colision(int direction) {
 
 
 bool check_y_colision() {
-    for (short row = 0; row < 3; row++) {
-        for (short col = 0; col < 3; col++) {
-            if ((*current.arr)[row][col] == 1) {
-                if ((row == 0) && (col == 0)) {
-                    if (((current.y - 1) + 1) == ROWS) return false;
-                    if (Table[(current.y - 1) + 1][current.x - 1] == 1) return false;
-                }
-
-                else if ((row == 0) && (col == 1)) {
-                    if (((current.y - 1) + 1) == ROWS) return false;
-                    if (Table[(current.y - 1) + 1][current.x] == 1) return false;
-                }
-
-                else if ((row == 0) && (col == 2)) {
-                    if (((current.y - 1) + 1) == ROWS) return false;
-                    if (Table[(current.y - 1) + 1][current.x + 1] == 1) return false;
-                }
-
-                else if ((row == 1) && (col == 0)) {
-                    if (((current.y) + 1) == ROWS) return false;
-                    if (Table[(current.y) + 1][current.x - 1] == 1) return false;
-                }
-
-                else if ((row == 1) && (col == 1)) {
-                    if (((current.y) + 1) == ROWS) return false;
-                    if (Table[(current.y) + 1][current.x] == 1) return false;
-                }
-
-                else if ((row == 1) && (col == 2)) {
-                    if (((current.y) + 1) == ROWS) return false;
-                    if (Table[(current.y) + 1][current.x + 1] == 1) return false;
-                }
-
-                else if ((row == 2) && (col == 0)) {
-                    if (((current.y + 1) + 1) == ROWS) return false;
-                    if (Table[(current.y + 1) + 1][current.x - 1] == 1) return false;
-                }
-
-                else if ((row == 2) && (col == 1)) {
-                    if (((current.y + 1) + 1) == ROWS) return false;
-                    if (Table[(current.y + 1) + 1][current.x] == 1) return false;
-                }
-
-                else if ((row == 2) && (col == 2)) {
-                    if (((current.y + 1) + 1) == ROWS) return false;
-                    if (Table[(current.y + 1) + 1][current.x + 1] == 1) return false;
-                }
+    for (short row = -1; row <= 1; row++) {
+        for (short col = -1; col <= 1; col++) {
+            if ((current.arr)[row + 1][col + 1] == 1) {
+                if (((current.y + row) + 1) == ROWS) return false;
+                if (Table[(current.y + row) + 1][current.x + col] == 1) return false;
             }
         }
     }
@@ -520,45 +195,11 @@ bool check_y_colision() {
 
 
 void write_to_table() {
-    for (short row = 0; row < 3; row++) {
-        for (short col = 0; col < 3; col++) {
-            if ((*current.arr)[row][col] == 1) {
-                if ((current.y - 1) <= 0) exit(0);
-                if ((row == 0) && (col == 0)) {
-                    Table[current.y - 1][current.x - 1] = 1;
-                }
-
-                else if ((row == 0) && (col == 1)) {
-                    Table[current.y - 1][current.x] = 1;
-                }
-
-                else if ((row == 0) && (col == 2)) {
-                    Table[current.y - 1][current.x + 1] = 1;
-                }
-
-                else if ((row == 1) && (col == 0)) {
-                    Table[current.y][current.x - 1] = 1;
-                }
-
-                else if ((row == 1) && (col == 1)) {
-                    Table[current.y][current.x] = 1;
-                }
-
-                else if ((row == 1) && (col == 2)) {
-                    Table[current.y][current.x + 1] = 1;
-                }
-
-                else if ((row == 2) && (col == 0)) {
-                    Table[current.y + 1][current.x - 1] = 1;
-                }
-
-                else if ((row == 2) && (col == 1)) {
-                    Table[current.y + 1][current.x] = 1;
-                }
-
-                else if ((row == 2) && (col == 2)) {
-                    Table[current.y + 1][current.x + 1] = 1;
-                }
+    if ((current.y - 1) <= 0) exit(0);
+    for (short row = -1; row <= 1; row++) {
+        for (short col = -1; col <= 1; col++) {
+            if ((current.arr)[row + 1][col + 1] == 1) {
+                Table[current.y + row][current.x + col] = 1;
             }
         }
     }
@@ -577,6 +218,26 @@ void reset_row(int r) {
 
 
 void print_score() {
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {COLS + 5, 1});
+    short x = COLS + 5;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {x, 1});
     printf("Score: %d", score);
+}
+
+
+void rotate() {
+    copy_arr(current.arr, old_arr);
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            current.arr[row][col] = old_arr[2 - col][row];
+        }
+    }
+}
+
+
+void copy_arr(int from[3][3], int to[3][3]) {
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            to[row][col] = from[row][col];
+        }
+    }
 }
