@@ -18,11 +18,11 @@
 short Table[ROWS][COLS] = {0};
 int score = 0;
 
-typedef struct Shape
-{
+typedef struct Shape {
     int arr[3][3];
     short x, y;
 };
+
 Shape current;
 Shape old_shape;
 
@@ -39,7 +39,6 @@ void copy_arr(int from[3][3], int to[3][3]);
 void rotate();
 void menu();
 void print_at_mid(char text[], int y);
-void set_console_size(short x, short y);
 void goto_XY_end();
 void gotoXY(short x, short y);
 bool resized();
@@ -50,6 +49,7 @@ void game_over();
 void print_game_over();
 
 
+// array of shape arrays
 int shapes[6][3][3] = {
     // 0 - L_Shape
     {
@@ -96,6 +96,7 @@ int main() {
 
 
 void play() {
+    // checks if some row is filled
     for (short row = 0; row < ROWS; row++) {
         int zeros = 0;
         for (short col = 0; col < COLS; col++) {
@@ -107,11 +108,13 @@ void play() {
     }
 
     srand(time(NULL));
+    // chooses random shape
     copy_arr(shapes[rand() % 6], current.arr);
 
+    // printing the game table
     for (short row = 0; row < ROWS; row++) {
         for (short col = 0; col < COLS; col++) {
-            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {col, row});
+            gotoXY(col, row);
             if (Table[row][col] == 0) printf(".");
             else printf("#");
         }
@@ -119,9 +122,11 @@ void play() {
 
     print_score();
 
+    // chooses random position where shape will be summoned
     current.x = rand() % 15 + 5;
     current.y = 1;
 
+    // main game loop
     while (true) {
         if (check_y_colision()) {
             old_shape = current;
@@ -129,6 +134,7 @@ void play() {
             print_shape(old_shape, '.');
             print_shape(current, '#');
             goto_XY_end();
+            // waits a while so that player can control shape without falling
             for (int i = 0; i < 20; i++) {
                 Sleep(1);
                 fflush(stdin);
@@ -162,6 +168,7 @@ void play() {
                         goto_XY_end();
                     }
 
+                    // skips this loop and falls faster
                     if (key == FALL) {
                         break;
                     }
@@ -177,13 +184,12 @@ void play() {
 }
 
 
+// function is used to print or clear shape from console dependig on symbol input
 void print_shape(Shape shape, char symbol) {
     for (short row = -1; row <= 1; row++) {
         for (short col = -1; col <= 1; col++){
             if ((shape.arr)[row + 1][col + 1] == 1) {
-                SetConsoleCursorPosition(
-                        GetStdHandle(STD_OUTPUT_HANDLE), 
-                        COORD {short (shape.x + col), short (shape.y + row)});
+                gotoXY(short (shape.x + col), short (shape.y + row));
                 printf("%c", symbol);
             }
         }
@@ -191,6 +197,8 @@ void print_shape(Shape shape, char symbol) {
 }
 
 
+// checks if there are any shapes or if there is border in given direction 
+//-1 = left, 1 = right
 bool check_x_colision(int direction) {
     for (short row = -1; row <= 1; row++) {
         for (short col = -1; col <= 1; col++) {
@@ -204,6 +212,7 @@ bool check_x_colision(int direction) {
 }
 
 
+// checks if there is occupied position or border under shape
 bool check_y_colision() {
     for (short row = -1; row <= 1; row++) {
         for (short col = -1; col <= 1; col++) {
@@ -217,6 +226,7 @@ bool check_y_colision() {
 }
 
 
+// saves position of shape into Table[][] and checks if shape did reach max height
 void write_to_table() {
     if ((current.y - 1) <= 0) game_over();
     for (short row = -1; row <= 1; row++) {
@@ -229,6 +239,7 @@ void write_to_table() {
 }
 
 
+// if row is fully occupied, copies values of each row above
 void reset_row(int r) {
     score += 100;
     for (int row = r; row != 0; row--) {
@@ -242,11 +253,12 @@ void reset_row(int r) {
 
 void print_score() {
     short x = COLS + 5;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {x, 1});
+    gotoXY(x, 1);
     printf("Score: %d", score);
 }
 
 
+// swaps positions of values in shape array so that it rotates in 90° to right
 void rotate() {
     copy_arr(current.arr, old_arr);
     for (int row = 0; row < 3; row++) {
@@ -277,6 +289,7 @@ COORD get_cursor() {
 }
 
 
+// gets size of opened console
 COORD get_size() {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	COORD coord = {0, 0};
@@ -303,26 +316,14 @@ void gotoXY(short x, short y) {
 }
 
 
+// sets cursor position to right bottom corner
 void goto_XY_end() {
 	COORD coord = get_size();
 	gotoXY(coord.X-1, coord.Y-1);
 }
 
 
-void set_console_size(short x, short y) {
-	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD mWindowSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
-
-	if(mWindowSize.X < x || x < 1) x = mWindowSize.X;
-	if(mWindowSize.Y < y || y < 1) y = mWindowSize.Y;
-
-	SMALL_RECT windowSize = {0, 0 , (short)(x-1), (short)(y-1)};
-
-	fflush(stdout);
-	SetConsoleScreenBufferSize(hConOut, {x, y});
-    SetConsoleWindowInfo(hConOut, TRUE, &windowSize);
-}
-
+// prints text at middle of console
 void print_at_mid(char text[], int y = 0) {
 	int size;
 	for(size = 0; text[size] != '\0'; size++);
