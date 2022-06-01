@@ -384,6 +384,15 @@ void print_game_over() {
 }
 
 
+void reset_table() {
+    for (short row = 0; row < ROWS; row++) {
+        for (short col = 0; col < COLS; col++){
+            Table[row][col] = 0;
+        }
+    }
+}
+
+
 void game_over() {
     print_game_over();
     goto_XY_end();
@@ -402,6 +411,8 @@ void game_over() {
 
             if (key == SPACE){
                 system("cls");
+                score = 0;
+                reset_table();
                 play();
                 break;
             }
